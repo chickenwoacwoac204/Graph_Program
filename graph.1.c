@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 // Cấu trúc biểu diễn một cạnh
 typedef struct Edge {
@@ -78,6 +79,64 @@ void printGraph(Graph* graph) {
     }
 }
 
+// Hàm tìm đỉnh có khoảng cách nhỏ nhất từ tập đỉnh chưa xét
+int findMinDistance(int* distances, int* visited, int numVertices) {
+    int minDistance = INT_MAX;
+    int minVertex = -1;
+
+    for (int i = 0; i < numVertices; i++) {
+        if (!visited[i] && distances[i] < minDistance) {
+            minDistance = distances[i];
+            minVertex = i;
+        }
+    }
+
+    return minVertex;
+}
+
+// Hàm tìm đường đi ngắn nhất từ đỉnh nguồn đến các đỉnh khác
+void dijkstra(Graph* graph, int src) {
+    int numVertices = graph->numVertices;
+    int* distances = (int*)malloc(numVertices * sizeof(int));
+    int* visited = (int*)malloc(numVertices * sizeof(int));
+
+    // Khởi tạo khoảng cách ban đầu là vô cùng và chưa xét đỉnh nào
+    for (int i = 0; i < numVertices; i++) {
+        distances[i] = INT_MAX;
+        visited[i] = 0;
+    }
+
+    // Khoảng cách từ đỉnh nguồn đến chính nó là 0
+    distances[src] = 0;
+
+    // Tìm đường đi ngắn nhất cho tất cả các đỉnh
+    for (int i = 0; i < numVertices - 1; i++) {
+        // Tìm đỉnh có khoảng cách nhỏ nhất từ tập đỉnh chưa xét
+        int u = findMinDistance(distances, visited, numVertices);
+        visited[u] = 1;
+
+        // Cập nhật khoảng cách của các đỉnh kề với đỉnh vừa xét
+        Edge* edge = graph->vertices[u].edges;
+        while (edge != NULL) {
+            int v = edge->vertex;
+            int weight = edge->weight;
+            if (!visited[v] && distances[u] != INT_MAX && distances[u] + weight < distances[v]) {
+                distances[v] = distances[u] + weight;
+            }
+            edge = edge->next;
+        }
+    }
+
+    // In khoảng cách ngắn nhất từ đỉnh nguồn đến các đỉnh khác
+    printf("Khoang cach ngan nhat tu dinh %d den cac dinh khac:\n", src);
+    for (int i = 0; i < numVertices; i++) {
+        printf("Dinh %d: %d\n", i, distances[i]);
+    }
+
+    free(distances);
+    free(visited);
+}
+
 int main() {
     int numVertices;
     printf("Nhap so dinh cua do thi: ");
@@ -86,6 +145,12 @@ int main() {
     Graph* graph = createGraph(numVertices);
     inputGraph(graph);
     printGraph(graph);
+    
+    int src;
+    printf("Nhap dinh nguon: ");
+    scanf("%d", &src);
+
+    dijkstra(graph, src);
 
     return 0;
 }
